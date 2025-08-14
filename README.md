@@ -13,7 +13,7 @@ A simple and effective implementation of concurrent-safe LRU cache on Go.
 ## Usage
 
 ```go
-import "github.com/yourname/lru"
+import "github.com/Averlex/lru"
 
 cache := lru.NewCache(100) // capacity = 100
 
@@ -48,5 +48,5 @@ type Cache interface {
 ## Installation
 
 ```bash
-go get github.com/yourname/lru
+go get github.com/Averlex/lru
 ```
