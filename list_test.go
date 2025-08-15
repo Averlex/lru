@@ -11,14 +11,14 @@ const (
 	testValue = 42
 )
 
-func verifyListStructure(t *testing.T, l List, length int, front, back *ListItem) {
+func verifyListStructure(t *testing.T, l List[any], length int, front, back *ListItem[any]) {
 	t.Helper()
 	require.Equal(t, length, l.Len())
 	require.Equal(t, front, l.Front())
 	require.Equal(t, back, l.Back())
 }
 
-func verifyMoveToFront(t *testing.T, l List, length int, elem *ListItem) {
+func verifyMoveToFront(t *testing.T, l List[any], length int, elem *ListItem[any]) {
 	t.Helper()
 
 	require.Equal(t, length, l.Len())
@@ -50,15 +50,15 @@ func emptyListPushOperations(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		method func(List, any) *ListItem
+		method func(List[any], any) *ListItem[any]
 	}{
-		{"push front", List.PushFront},
-		{"push back", List.PushBack},
+		{"push front", List[any].PushFront},
+		{"push back", List[any].PushBack},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			l := NewList()
+			l := NewList[any]()
 			elem := tt.method(l, testValue)
 			verifyListStructure(t, l, 1, elem, elem)
 		})
@@ -68,7 +68,7 @@ func emptyListPushOperations(t *testing.T) {
 func emptyListRemove(t *testing.T) {
 	t.Helper()
 
-	l := NewList()
+	l := NewList[any]()
 	l.Remove(nil)
 	verifyListStructure(t, l, 0, nil, nil)
 }
@@ -76,8 +76,8 @@ func emptyListRemove(t *testing.T) {
 func emptyListMoveToFront(t *testing.T) {
 	t.Helper()
 
-	l := NewList()
-	elem := &ListItem{Value: testValue}
+	l := NewList[any]()
+	elem := &ListItem[any]{Value: testValue}
 	l.MoveToFront(elem)
 
 	verifyMoveToFront(t, l, 1, elem)
@@ -105,7 +105,7 @@ func singleElementList(t *testing.T) {
 func singleElementStructure(t *testing.T) {
 	t.Helper()
 
-	l := NewList()
+	l := NewList[any]()
 	elem := l.PushFront(testValue)
 	verifyListStructure(t, l, 1, elem, elem)
 }
@@ -115,16 +115,16 @@ func singleElementPushOperations(t *testing.T) {
 
 	testCases := []struct {
 		name                   string
-		method                 func(List, any) *ListItem
-		headMethod, tailMethod func(List) *ListItem
+		method                 func(List[any], any) *ListItem[any]
+		headMethod, tailMethod func(List[any]) *ListItem[any]
 	}{
-		{"push front", List.PushFront, List.Front, List.Back},
-		{"push back", List.PushBack, List.Back, List.Front},
+		{"push front", List[any].PushFront, List[any].Front, List[any].Back},
+		{"push back", List[any].PushBack, List[any].Back, List[any].Front},
 	}
 
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			l := NewList()
+			l := NewList[any]()
 			first := l.PushFront(testValue)
 			second := tC.method(l, testValue)
 
@@ -143,7 +143,7 @@ func singleElementPushOperations(t *testing.T) {
 func singleElementRemove(t *testing.T) {
 	t.Helper()
 
-	l := NewList()
+	l := NewList[any]()
 	elem := l.PushFront(testValue)
 	l.Remove(elem)
 	verifyListStructure(t, l, 0, nil, nil)
@@ -152,7 +152,7 @@ func singleElementRemove(t *testing.T) {
 func singleElementMoveToFront(t *testing.T) {
 	t.Helper()
 
-	l := NewList()
+	l := NewList[any]()
 	elem := l.PushFront(testValue)
 	l.MoveToFront(elem)
 
@@ -181,7 +181,7 @@ func twoElementList(t *testing.T) {
 func twoElementStructure(t *testing.T) {
 	t.Helper()
 
-	l := NewList()
+	l := NewList[any]()
 	first := l.PushFront(testValue)
 	second := l.PushBack(testValue)
 
@@ -197,15 +197,15 @@ func twoElementPushOperations(t *testing.T) {
 
 	testCases := []struct {
 		name   string
-		method func(List, any) *ListItem
+		method func(List[any], any) *ListItem[any]
 	}{
-		{"push front", List.PushFront},
-		{"push back", List.PushBack},
+		{"push front", List[any].PushFront},
+		{"push back", List[any].PushBack},
 	}
 
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			l := NewList()
+			l := NewList[any]()
 			first := l.PushFront(testValue)
 			second := l.PushBack(testValue)
 			newElem := tC.method(l, testValue)
@@ -228,7 +228,7 @@ func twoElementRemove(t *testing.T) {
 
 	testCases := []struct {
 		name string
-		test func(*testing.T, List)
+		test func(*testing.T, List[any])
 	}{
 		{"remove first", removeFirstElement},
 		{"remove last", removeLastElement},
@@ -236,7 +236,7 @@ func twoElementRemove(t *testing.T) {
 
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			l := NewList()
+			l := NewList[any]()
 			l.PushFront(testValue)
 			l.PushBack(testValue)
 			tC.test(t, l)
@@ -246,7 +246,7 @@ func twoElementRemove(t *testing.T) {
 	}
 }
 
-func removeFirstElement(t *testing.T, l List) {
+func removeFirstElement(t *testing.T, l List[any]) {
 	t.Helper()
 
 	second := l.Back()
@@ -254,7 +254,7 @@ func removeFirstElement(t *testing.T, l List) {
 	verifyListStructure(t, l, 1, second, second)
 }
 
-func removeLastElement(t *testing.T, l List) {
+func removeLastElement(t *testing.T, l List[any]) {
 	t.Helper()
 
 	first := l.Front()
@@ -274,7 +274,7 @@ func twoElementMoveToFront(t *testing.T) {
 
 	for _, tC := range testCases {
 		t.Run(tC.name, func(t *testing.T) {
-			l := NewList()
+			l := NewList[any]()
 			first := l.PushFront(testValue)
 			second := l.PushBack(testValue)
 
@@ -302,13 +302,13 @@ func complexBehavior(t *testing.T) {
 
 type BehaviorTestSuite struct {
 	suite.Suite
-	l        List
+	l        List[any]
 	cycleLen int
 	expected []int
 }
 
 func (s *BehaviorTestSuite) SetupTest() {
-	s.l = NewList()
+	s.l = NewList[any]()
 
 	s.cycleLen = 10
 	s.expected = make([]int, 0, s.cycleLen)
@@ -346,7 +346,7 @@ func (s *BehaviorTestSuite) TestCyclicMoveToFront() {
 	s.Require().Equal(s.expected, s.getList(s.l))
 }
 
-func (s *BehaviorTestSuite) getList(l List) []int {
+func (s *BehaviorTestSuite) getList(l List[any]) []int {
 	elems := make([]int, 0, s.cycleLen)
 	for i := l.Front(); i != nil; i = i.Next {
 		elems = append(elems, i.Value.(int))
@@ -356,7 +356,7 @@ func (s *BehaviorTestSuite) getList(l List) []int {
 
 func TestList(t *testing.T) {
 	t.Run("empty list", func(t *testing.T) {
-		l := NewList()
+		l := NewList[any]()
 
 		require.Equal(t, 0, l.Len())
 		require.Nil(t, l.Front())
@@ -364,7 +364,7 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("complex", func(t *testing.T) {
-		l := NewList()
+		l := NewList[any]()
 
 		l.PushFront(10) // [10]
 		l.PushBack(20)  // [10, 20]
