@@ -1,6 +1,6 @@
 # lru
 
-A simple and effective implementation of concurrent-safe LRU cache on Go.
+A simple and effective implementation of thread-safe LRU cache on Go.
 
 ## Features
 
