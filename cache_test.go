@@ -12,7 +12,7 @@ import (
 
 func TestCache(t *testing.T) {
 	t.Run("empty cache", func(t *testing.T) {
-		c := NewCache(10)
+		c := NewCache[string, any](10)
 
 		_, ok := c.Get("aaa")
 		require.False(t, ok)
@@ -22,7 +22,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("simple", func(t *testing.T) {
-		c := NewCache(5)
+		c := NewCache[string, any](5)
 
 		wasInCache := c.Set("aaa", 100)
 		require.False(t, wasInCache)
@@ -51,7 +51,7 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		c := NewCache(3)
+		c := NewCache[string, any](3)
 
 		c.Set("key1", 100)
 		c.Set("key2", 200)
@@ -71,30 +71,29 @@ func TestCache(t *testing.T) {
 	t.Run("stress", cacheStressSuite)
 }
 
-//nolint:revive
 func TestCacheMultithreading(t *testing.T) {
-	c := NewCache(10)
+	c := NewCache[string, any](10)
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 1_000_000; i++ {
-			c.Set(Key(strconv.Itoa(i)), i)
+			require.False(t, c.Set(strconv.Itoa(i), i), "key #%d already exists", i)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 1_000_000; i++ {
-			c.Get(Key(strconv.Itoa(rand.Intn(1_000_000))))
+			c.Get(strconv.Itoa(rand.Intn(1_000_000)))
 		}
 	}()
 
 	wg.Wait()
 }
 
-func notInCacheChecks(t *testing.T, c *Cache, key Key) {
+func notInCacheChecks(t *testing.T, c *Cache[string, any], key string) {
 	t.Helper()
 
 	v, ok := (*c).Get(key)
@@ -106,39 +105,39 @@ func incorrectCapacity(t *testing.T) {
 	t.Helper()
 
 	t.Run("zero capacity cache is unusable", func(t *testing.T) {
-		c := NewCache(0)
+		c := NewCache[string, any](0)
 		require.Nil(t, c)
 	})
 
 	t.Run("negative capacity cache is unusable", func(t *testing.T) {
-		c := NewCache(-1)
+		c := NewCache[string, any](-1)
 		require.Nil(t, c)
 	})
 }
 
 type CacheTestHelper struct {
 	suite.Suite
-	cache Cache
+	cache Cache[string, any]
 }
 
-func (s *CacheTestHelper) isNotInCache(k Key) {
+func (s *CacheTestHelper) isNotInCache(k string) {
 	v, ok := s.cache.Get(k)
 	s.False(ok)
 	s.Nil(v)
 }
 
-func (s *CacheTestHelper) isInCache(k Key, val any) {
+func (s *CacheTestHelper) isInCache(k string, val any) {
 	v, ok := s.cache.Get(k)
 	s.True(ok)
 	s.Equal(val, v)
 }
 
-func (s *CacheTestHelper) setExisting(k Key, val any) {
+func (s *CacheTestHelper) setExisting(k string, val any) {
 	wasInCache := s.cache.Set(k, val)
 	s.True(wasInCache)
 }
 
-func (s *CacheTestHelper) setNew(k Key, val any) {
+func (s *CacheTestHelper) setNew(k string, val any) {
 	wasInCache := s.cache.Set(k, val)
 	s.False(wasInCache)
 }
@@ -148,7 +147,7 @@ type SingleItemCacheSuite struct {
 }
 
 func (s *SingleItemCacheSuite) SetupTest() {
-	s.cache = NewCache(1)
+	s.cache = NewCache[string, any](1)
 }
 
 func (s *SingleItemCacheSuite) TestSetToEmpty() {
@@ -200,7 +199,7 @@ type MultiItemCacheSuite struct {
 }
 
 func (s *MultiItemCacheSuite) SetupTest() {
-	s.cache = NewCache(3)
+	s.cache = NewCache[string, any](3)
 }
 
 func (s *MultiItemCacheSuite) TestSetToEmpty() {
@@ -290,7 +289,7 @@ type CacheEvictionSuite struct {
 }
 
 func (s *CacheEvictionSuite) SetupTest() {
-	s.cache = NewCache(3)
+	s.cache = NewCache[string, any](3)
 }
 
 func cacheEvictionSuite(t *testing.T) {
@@ -331,7 +330,7 @@ func (s *CacheEvictionSuite) TestUnusedEviction() {
 }
 
 func (s *CacheEvictionSuite) TestSingleItemCacheEviction() {
-	c := NewCache(1)
+	c := NewCache[string, any](1)
 	c.Set("key1", 100)
 	c.Set("key2", 200)
 
@@ -349,14 +348,14 @@ type CacheStressSuite struct {
 }
 
 func (s *CacheStressSuite) SetupTest() {
-	s.cache = NewCache(1000)
+	s.cache = NewCache[string, any](1000)
 }
 
 func (s *CacheStressSuite) TestHighFrequencySets() {
 	iterations := 1_000_000
 
 	for i := 0; i < iterations; i++ {
-		key := Key(strconv.Itoa(i))
+		key := strconv.Itoa(i)
 		s.setNew(key, i)
 
 		// To reduce test execution time.
@@ -371,7 +370,7 @@ func (s *CacheStressSuite) TestHeavyItems() {
 	bigValue := make([]byte, 1024) // 1KB
 
 	for i := 0; i < items; i++ {
-		key := Key(strconv.Itoa(i))
+		key := strconv.Itoa(i)
 		s.cache.Set(key, bigValue)
 
 		// To reduce test execution time.
@@ -381,7 +380,7 @@ func (s *CacheStressSuite) TestHeavyItems() {
 	}
 
 	// Old items should be evicted.
-	oldKey := Key("0")
+	oldKey := "0"
 	s.isNotInCache(oldKey)
 }
 
@@ -397,7 +396,7 @@ func (s *CacheStressSuite) TestComplexMultithreading() {
 		defer close(res)
 		setsDone := 0
 		for i := range 100_000 {
-			key := Key(strconv.Itoa(i))
+			key := strconv.Itoa(i)
 			s.cache.Set(key, i)
 			setsDone++
 		}
@@ -409,7 +408,7 @@ func (s *CacheStressSuite) TestComplexMultithreading() {
 		defer close(res)
 		getsDone := 0
 		for i := range 100_000 {
-			key := Key(strconv.Itoa(i))
+			key := strconv.Itoa(i)
 			s.cache.Get(key)
 			getsDone++
 		}
