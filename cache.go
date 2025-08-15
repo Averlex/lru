@@ -12,8 +12,8 @@ type Cache[K comparable, V any] interface {
 type lruCache[K comparable, V any] struct {
 	mu       sync.Mutex
 	capacity int
-	queue    List
-	items    map[K]*ListItem
+	queue    List[*cacheListItem[K, V]]
+	items    map[K]*ListItem[*cacheListItem[K, V]]
 }
 
 type cacheListItem[K comparable, V any] struct {
@@ -30,8 +30,8 @@ func NewCache[K comparable, V any](capacity int) Cache[K, V] {
 
 	return &lruCache[K, V]{
 		capacity: capacity,
-		queue:    NewList(),
-		items:    make(map[K]*ListItem, capacity),
+		queue:    NewList[*cacheListItem[K, V]](),
+		items:    make(map[K]*ListItem[*cacheListItem[K, V]], capacity),
 	}
 }
 
@@ -56,7 +56,7 @@ func (c *lruCache[K, V]) Set(key K, value V) bool {
 
 	// Removing the oldest cache item to sustain the capacity.
 	if c.queue.Len() > c.capacity {
-		delete(c.items, c.queue.Back().Value.(*cacheListItem[K, V]).key)
+		delete(c.items, c.queue.Back().Value.key)
 		c.queue.Remove(c.queue.Back())
 	}
 
@@ -73,7 +73,7 @@ func (c *lruCache[K, V]) Get(key K) (V, bool) {
 
 	if v, ok := c.items[key]; ok {
 		c.queue.MoveToFront(v)
-		return v.Value.(*cacheListItem[K, V]).value, true
+		return v.Value.value, true
 	}
 
 	return zeroVal, false
@@ -84,6 +84,6 @@ func (c *lruCache[K, V]) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.queue = NewList()
-	c.items = make(map[K]*ListItem, c.capacity)
+	c.queue = NewList[*cacheListItem[K, V]]()
+	c.items = make(map[K]*ListItem[*cacheListItem[K, V]], c.capacity)
 }
