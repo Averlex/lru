@@ -2,53 +2,53 @@
 package lru
 
 // List represents some basic operations over a doubly-linked list.
-type List interface {
+type List[V any] interface {
 	Len() int
-	Front() *ListItem
-	Back() *ListItem
-	PushFront(v any) *ListItem
-	PushBack(v any) *ListItem
-	Remove(i *ListItem)
-	MoveToFront(i *ListItem)
+	Front() *ListItem[V]
+	Back() *ListItem[V]
+	PushFront(v V) *ListItem[V]
+	PushBack(v V) *ListItem[V]
+	Remove(elem *ListItem[V])
+	MoveToFront(elem *ListItem[V])
 }
 
 // ListItem represents a basic item of the doubly-linked list.
-type ListItem struct {
-	Value any
-	Next  *ListItem
-	Prev  *ListItem
+type ListItem[V any] struct {
+	Value V
+	Next  *ListItem[V]
+	Prev  *ListItem[V]
 }
 
-type list struct {
+type list[V any] struct {
 	len   int
-	front *ListItem
-	back  *ListItem
+	front *ListItem[V]
+	back  *ListItem[V]
 }
 
 // NewList returns a new list with 0 length.
-func NewList() List {
-	return new(list)
+func NewList[V any]() List[V] {
+	return new(list[V])
 }
 
 // Len returns the length of the list.
-func (l *list) Len() int {
+func (l *list[V]) Len() int {
 	return l.len
 }
 
 // Front returns the first item in the list.
 // If the list is empty, it returns nil.
-func (l *list) Front() *ListItem {
+func (l *list[V]) Front() *ListItem[V] {
 	return l.front
 }
 
 // Back returns the last item in the list.
 // If the list is empty, it returns nil.
-func (l *list) Back() *ListItem {
+func (l *list[V]) Back() *ListItem[V] {
 	return l.back
 }
 
 // pushFrontLogic is a helper method for PushFront and MoveToFront methods.
-func (l *list) pushFrontLogic(i *ListItem) *ListItem {
+func (l *list[V]) pushFrontLogic(i *ListItem[V]) *ListItem[V] {
 	switch l.len {
 	case 0:
 		l.front = i
@@ -72,16 +72,16 @@ func (l *list) pushFrontLogic(i *ListItem) *ListItem {
 
 // PushFront adds the value v at the beginning of the list.
 // The function returns the item that was created for the value v.
-func (l *list) PushFront(v any) *ListItem {
-	newItem := &ListItem{Value: v}
+func (l *list[V]) PushFront(v V) *ListItem[V] {
+	newItem := &ListItem[V]{Value: v}
 
 	return l.pushFrontLogic(newItem)
 }
 
 // PushBack adds the value v at the end of the list.
 // The function returns the item that was created for the value v.
-func (l *list) PushBack(v any) *ListItem {
-	newItem := &ListItem{Value: v}
+func (l *list[V]) PushBack(v V) *ListItem[V] {
+	newItem := &ListItem[V]{Value: v}
 
 	switch l.len {
 	case 0:
@@ -104,7 +104,7 @@ func (l *list) PushBack(v any) *ListItem {
 
 // Remove deletes the specified ListItem from the list.
 // The length of the list is decremented by one.
-func (l *list) Remove(i *ListItem) {
+func (l *list[V]) Remove(elem *ListItem[V]) {
 	switch l.len {
 	case 0:
 		return
@@ -113,18 +113,18 @@ func (l *list) Remove(i *ListItem) {
 		l.front = nil
 		l.back = nil
 	default:
-		switch i {
+		switch elem {
 		case l.front:
-			l.front = i.Next
+			l.front = elem.Next
 			l.front.Prev = nil
 		case l.back:
-			l.back = i.Prev
+			l.back = elem.Prev
 			l.back.Next = nil
 		// Item is somewhere in the middle of the list.
 		default:
 			// Assuming the list item is in the given list - panic otherwise.
-			i.Prev.Next = i.Next
-			i.Next.Prev = i.Prev
+			elem.Prev.Next = elem.Next
+			elem.Next.Prev = elem.Prev
 		}
 	}
 
@@ -133,7 +133,7 @@ func (l *list) Remove(i *ListItem) {
 
 // MoveToFront moves item i to the front of the list.
 // For an empty list function has the similar behavior as PushFront method.
-func (l *list) MoveToFront(i *ListItem) {
-	l.Remove(i)
-	l.pushFrontLogic(i)
+func (l *list[V]) MoveToFront(elem *ListItem[V]) {
+	l.Remove(elem)
+	l.pushFrontLogic(elem)
 }
