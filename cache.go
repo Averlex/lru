@@ -2,47 +2,44 @@ package lru
 
 import "sync"
 
-// Key is a wrapper type for string keys.
-type Key string
-
 // Cache is an interface for an LRU cache.
-type Cache interface {
-	Set(key Key, value any) bool
-	Get(key Key) (any, bool)
+type Cache[K comparable, V any] interface {
+	Set(key K, value V) bool
+	Get(key K) (V, bool)
 	Clear()
 }
 
-type lruCache struct {
+type lruCache[K comparable, V any] struct {
 	mu       sync.Mutex
 	capacity int
 	queue    List
-	items    map[Key]*ListItem
+	items    map[K]*ListItem
 }
 
-type cacheListItem struct {
-	key   Key
-	value any
+type cacheListItem[K comparable, V any] struct {
+	key   K
+	value V
 }
 
 // NewCache returns a new Cache with the given capacity. If the capacity is less than 1, it returns nil.
 // The cache is implemented as a doubly-linked list with a map from keys to list items.
-func NewCache(capacity int) Cache {
+func NewCache[K comparable, V any](capacity int) Cache[K, V] {
 	if capacity < 1 {
 		return nil
 	}
 
-	return &lruCache{
+	return &lruCache[K, V]{
 		capacity: capacity,
 		queue:    NewList(),
-		items:    make(map[Key]*ListItem, capacity),
+		items:    make(map[K]*ListItem, capacity),
 	}
 }
 
 // Set adds a key-value pair to the cache. If the key already exists, it updates the value
 // and moves the item to the front of the queue. If the cache exceeds its capacity, it removes
 // the least recently used item. Returns true if the key was already present in the cache, false otherwise.
-func (c *lruCache) Set(key Key, value any) bool {
-	listItem := &cacheListItem{key, value}
+func (c *lruCache[K, V]) Set(key K, value V) bool {
+	listItem := &cacheListItem[K, V]{key, value}
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -59,7 +56,7 @@ func (c *lruCache) Set(key Key, value any) bool {
 
 	// Removing the oldest cache item to sustain the capacity.
 	if c.queue.Len() > c.capacity {
-		delete(c.items, c.queue.Back().Value.(*cacheListItem).key)
+		delete(c.items, c.queue.Back().Value.(*cacheListItem[K, V]).key)
 		c.queue.Remove(c.queue.Back())
 	}
 
@@ -67,24 +64,26 @@ func (c *lruCache) Set(key Key, value any) bool {
 }
 
 // Get returns a value for a key if it exists in the cache, also moves the accessed item
-// to the front of the queue. Otherwise, returns nil and false.
-func (c *lruCache) Get(key Key) (any, bool) {
+// to the front of the queue. Otherwise, returns zero value and false.
+func (c *lruCache[K, V]) Get(key K) (V, bool) {
+	var zeroVal V
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if v, ok := c.items[key]; ok {
 		c.queue.MoveToFront(v)
-		return v.Value.(*cacheListItem).value, true
+		return v.Value.(*cacheListItem[K, V]).value, true
 	}
 
-	return nil, false
+	return zeroVal, false
 }
 
 // Clear removes all stored items from the cache.
-func (c *lruCache) Clear() {
+func (c *lruCache[K, V]) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.queue = NewList()
-	c.items = make(map[Key]*ListItem, c.capacity)
+	c.items = make(map[K]*ListItem, c.capacity)
 }
