@@ -4,18 +4,20 @@ A simple and effective implementation of concurrent-safe LRU cache on Go.
 
 ## Features
 
-- ✅ O(1) average time complexity for `Get` and `Set`
+- ✅ O(1) average time complexity for `Get`, `Set` and `Clear`
 - ✅ Thread-safe with `sync.Mutex`
 - ✅ Automatic eviction of least recently used items
-- ✅ Clear operation to reset the cache
+- ✅ **Generic types** for keys and values — works with any comparable key type
 - ✅ Simple, idiomatic Go interface
 
 ## Usage
 
+**Any comparable key type is supported**
+
 ```go
 import "github.com/Averlex/lru"
 
-cache := lru.NewCache(100) // capacity = 100
+cache := lru.NewCache[string, string](100) // capacity = 100
 
 cache.Set("key1", "value1")
 if val, ok := cache.Get("key1"); ok {
@@ -28,21 +30,22 @@ cache.Clear()
 ## Interface
 
 ```go
-type Cache interface {
-    Set(key Key, value any) bool
-    Get(key Key) (any, bool)
+type Cache[K comparable, V any] interface {
+    Set(key K, value V) bool
+    Get(key K) (V, bool)
     Clear()
 }
 ```
 
-- `Set` returns `true` if the key already existed.
-- `Get` returns the value and a boolean indicating presence.
-- `Clear` removes all entries.
+- `Set` returns `true` if the key already exists.
+- `Get` returns the value and a boolean indicating it's presence in the cache.
+- `Clear` removes all entries from the cache.
 
 ## Implementation
 
-- Uses a `map[Key]*ListItem` for O(1) access.
+- Uses a `map[key]*ListItem` for O(1) access.
 - Doubly-linked list (`List`) to maintain access order.
+- Generic `List` and `ListItem` types ensure type safety without `interface{}` assertions.
 - Guarded by a mutex for concurrent access.
 
 ## Installation
