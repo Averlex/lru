@@ -1,5 +1,10 @@
 # lru
 
+[![Go version](https://img.shields.io/badge/go-1.24.2+-blue.svg)](https://golang.org)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Averlex/lru.svg)](https://pkg.go.dev/github.com/Averlex/lru)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Averlex/lru)](https://goreportcard.com/report/github.com/Averlex/lru)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A simple and effective implementation of thread-safe LRU cache on Go.
 
 ## Features
